@@ -1,0 +1,33 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline
+  namespace: elastic-system
+data:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      mutate {
+        add_field => {
+          "environment" => "eks-dev"
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["https://elk-cluster-es-http.elastic-system.svc:9200"]
+        user => "elastic"
+        password => "${ELASTIC_PASSWORD}"
+        ssl_enabled => true
+        ssl_certificate_authorities => ["/usr/share/logstash/config/certs/ca.crt"]
+        index => "kubernetes-logs-%{+YYYY.MM.dd}"
+      }
+    }
+
